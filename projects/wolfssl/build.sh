@@ -15,20 +15,15 @@
 #
 ################################################################################
 
-# target_dir determined by Dockerfile
-target_dir="$SRC/fuzz-targets"
-
 # build wolfssl
 ./autogen.sh
-./configure --enable-static --disable-shared --prefix=/usr CC="clang"
-make -j "$(nproc)" all
-make install
+./configure --enable-static --disable-shared \
+    --with-fuzzer-lib="$LIB_FUZZING_ENGINE" \
+    CC="$CC" \
+    CFLAGS="$CFLAGS" \
+    CXX="$CXX" \
+    CXXFLAGS="$CXXFLAGS"
+make
 
-# put linker arguments into the environment, appending to any existing ones
-export LDFLAGS="${LDFLAGS-""}"
-export LDLIBS="${LDLIBS-""} -lwolfssl -lFuzzingEngine"
-
-# make and export targets to $OUT; environment overridding internal variables
-cd "${target_dir}"
-make -e all
-make -e export prefix="$OUT"
+# export targets to $OUT
+./fuzz/export_targets.sh "$OUT"
